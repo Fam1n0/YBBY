@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YBBY</title>
+    <style>
+        body {
+            background-color: black;
+            color: white; 
+        }
+
+        canvas {
+            border: 1px solid white; 
+            cursor: crosshair;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            display: block;
+            margin: 20px auto;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            margin: 10px auto;
+        }
+
+        #useCustomImage {
+            background: url('button.jpg') no-repeat center; 
+            background-size: cover; 
+            background-position: center;
+            border: none;
+            cursor: pointer;
+            width: 150px;
+            height: 50px;
+        }
+
+        #saveCanvas {
+            width: 150px;
+            height: 50px;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<canvas id="canvas" width="800" height="500"></canvas>
+
+<div id="controls">
+    <div>
+        <input type="file" id="customImage" style="display:none">
+        <button id="useCustomImage"></button>
+        <input type="image" id="saveCanvas" src="save.jpg" alt="Save Drawing">
+    </div>
+    <div align='center'>
+        <label for="brushSize"><font size='15' color='Teal'>Brush Size</font></label>
+        <input type="range" id="brushSize" min="1" max="50" value="10">
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let customPattern;
+
+   
+    canvas.addEventListener('mousedown', () => { isDrawing = true; });
+    canvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+        ctx.beginPath();
+    });
+    canvas.addEventListener('mousemove', draw);
+
+   
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isDrawing = true;
+    });
+    canvas.addEventListener('touchend', () => {
+        isDrawing = false;
+        ctx.beginPath();
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        draw(e.touches[0]);
+    });
+
+    document.getElementById('brushSize').addEventListener('input', (event) => {
+        ctx.lineWidth = event.target.value;
+    });
+
+    document.getElementById('useCustomImage').addEventListener('click', function() {
+        document.getElementById('customImage').click();
+    });
+
+    document.getElementById('customImage').addEventListener('change', function() {
+        const file = this.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const maxDimension = 800;
+                    let scaleFactor = maxDimension / Math.max(img.width, img.height);
+
+                    const resizedWidth = img.width * scaleFactor;
+                    const resizedHeight = img.height * scaleFactor;
+
+                   
+                    const offscreenCanvas = document.createElement('canvas');
+                    offscreenCanvas.width = resizedWidth;
+                    offscreenCanvas.height = resizedHeight;
+                    const offscreenCtx = offscreenCanvas.getContext('2d');
+                    offscreenCtx.drawImage(img, 0, 0, resizedWidth, resizedHeight);
+
+                  
+                    customPattern = ctx.createPattern(offscreenCanvas, 'repeat');
+                    ctx.strokeStyle = customPattern;
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function draw(event) {
+        if (!isDrawing) return;
+        let x = event.clientX ? event.clientX - canvas.offsetLeft : event.pageX - canvas.offsetLeft;
+        let y = event.clientY ? event.clientY - canvas.offsetTop : event.pageY - canvas.offsetTop;
+
+        ctx.lineCap = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    document.getElementById('saveCanvas').addEventListener('click', function() {
+ 
+        const now = new Date();
+        const dateStr = now.getDate().toString().padStart(2, '0') + 
+                        (now.getMonth() + 1).toString().padStart(2, '0') + 
+                        now.getFullYear().toString().substr(2,2);
+        const timeStr = now.getHours().toString().padStart(2, '0') + 
+                        now.getMinutes().toString().padStart(2, '0') + 
+                        now.getSeconds().toString().padStart(2, '0');
+        const fileName = dateStr + "_" + timeStr + ".png";
+
+     
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    });
+
+</script>
+
+</body>
+</html>
