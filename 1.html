@@ -3,38 +3,34 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YBBY</title>
     <style>
         body {
             background-color: black;
-            color: white; 
+            color: white;
+        }
+
+        canvas, #controls {
+            max-width: 95%;
+            margin: 20px auto;
         }
 
         canvas {
-            border: 1px solid white; 
+            border: 1px solid white;
             cursor: crosshair;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
             display: block;
-            margin: 20px auto;
         }
 
         #controls {
             display: flex;
             justify-content: space-between;
-            width: 400px;
-            margin: 10px auto;
+            flex-wrap: wrap;
         }
 
         #useCustomImage {
-            background: url('button.jpg') no-repeat center; 
-            background-size: cover; 
+            background: url('button.jpg') no-repeat center;
+            background-size: cover;
             background-position: center;
             border: none;
             cursor: pointer;
@@ -48,96 +44,73 @@
             border: none;
             cursor: pointer;
         }
-#brushSize {
-    width: 300px; /* increase width as you desire */
-    height: 10px; /* increase height for a taller track */
-    outline: none; /* remove default focus outline */
-    -webkit-appearance: none; /* necessary to style the slider on WebKit browsers */
-    margin: 20px 0;
-}
 
-#brushSize::-webkit-slider-thumb {
-    width: 20px; /* width of the thumb */
-    height: 20px; /* height of the thumb */
-    background: teal; /* color of the thumb */
-    cursor: pointer; 
-    -webkit-appearance: none; /* override default appearance */
-    border-radius: 50%; /* rounded thumb */
-}
+        #brushSize {
+            width: 80%;
+            height: 10px;
+            outline: none;
+            -webkit-appearance: none;
+            margin: 20px 0;
+        }
 
-#brushSize::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    background: teal;
-    cursor: pointer;
-    border-radius: 50%;
-}
+        #brushSize::-webkit-slider-thumb {
+            width: 20px;
+            height: 20px;
+            background: teal;
+            cursor: pointer;
+            -webkit-appearance: none;
+            border-radius: 50%;
+        }
 
-#brushSize::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 10px;
-    cursor: pointer;
-    background: #ccc; /* color of the track */
-}
+        #brushSize::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: teal;
+            cursor: pointer;
+            border-radius: 50%;
+        }
 
-#brushSize::-moz-range-track {
-    width: 100%;
-    height: 10px;
-    cursor: pointer;
-    background: #ccc;
-}
+        #brushSize::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            background: #ccc;
+        }
+
+        #brushSize::-moz-range-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            background: #ccc;
+        }
 
     </style>
-
-<script>
-    window.addEventListener('DOMContentLoaded', (event) => {
-        const canvasWidth = 1000; // Updated Canvas width
-        const controlsWidth = 400; // Controls width based on your CSS
-        const margins = 40; // Total margins (20px canvas margin * 2)
-
-        // Using Math.max to ensure we consider the largest width.
-        const totalWidth = Math.max(canvasWidth, controlsWidth) + margins;
-
-        const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-
-        // Calculate the scale factor
-        const initialScale = viewportWidth / totalWidth;
-        const viewportMeta = document.querySelector("meta[name='viewport']");
-        viewportMeta.content = `width=device-width, initial-scale=${initialScale}`;
-    });
-</script>
-
-
 </head>
 
 <body>
 
 <canvas id="canvas" width="1000" height="800"></canvas>
-  <table align='center'>
-    <tr>
 <div id="controls">
-  <td><div>
+    <div>
         <input type="file" id="customImage" style="display:none">
         <button id="useCustomImage"></button>
-      </div></td>
-
-  <td> <div align='center'>
-        <label for="brushSize"><font size='5' color='Teal'>Brush Size</font></label>
+    </div>
+    <div>
+        <label for="brushSize" style="color:Teal; font-size: larger;">Brush Size</label>
         <input type="range" id="brushSize" min="1" max="100" value="10">
-    </div></td>
-  <td>
-<div align='center'>  <input type="image" id="saveCanvas" src="save.jpg" alt="Save Drawing">
-    </div></td></tr></table>
+    </div>
+    <div>
+        <input type="image" id="saveCanvas" src="save.jpg" alt="Save Drawing">
+    </div>
 </div>
-  
 
 <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
     let customPattern;
+    let scaleFactor = canvas.offsetWidth / canvas.width;
 
-   
     canvas.addEventListener('mousedown', () => { isDrawing = true; });
     canvas.addEventListener('mouseup', () => {
         isDrawing = false;
@@ -145,7 +118,6 @@
     });
     canvas.addEventListener('mousemove', draw);
 
-   
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         isDrawing = true;
@@ -177,18 +149,15 @@
                 img.onload = function() {
                     const maxDimension = 800;
                     let scaleFactor = maxDimension / Math.max(img.width, img.height);
-
                     const resizedWidth = img.width * scaleFactor;
                     const resizedHeight = img.height * scaleFactor;
 
-                   
                     const offscreenCanvas = document.createElement('canvas');
                     offscreenCanvas.width = resizedWidth;
                     offscreenCanvas.height = resizedHeight;
                     const offscreenCtx = offscreenCanvas.getContext('2d');
                     offscreenCtx.drawImage(img, 0, 0, resizedWidth, resizedHeight);
 
-                  
                     customPattern = ctx.createPattern(offscreenCanvas, 'repeat');
                     ctx.strokeStyle = customPattern;
                 }
@@ -200,8 +169,8 @@
 
     function draw(event) {
         if (!isDrawing) return;
-        let x = event.clientX ? event.clientX - canvas.offsetLeft : event.pageX - canvas.offsetLeft;
-        let y = event.clientY ? event.clientY - canvas.offsetTop : event.pageY - canvas.offsetTop;
+        let x = (event.clientX ? event.clientX - canvas.offsetLeft : event.pageX - canvas.offsetLeft) / scaleFactor;
+        let y = (event.clientY ? event.clientY - canvas.offsetTop : event.pageY - canvas.offsetTop) / scaleFactor;
 
         ctx.lineCap = 'round';
         ctx.lineTo(x, y);
@@ -211,17 +180,15 @@
     }
 
     document.getElementById('saveCanvas').addEventListener('click', function() {
- 
         const now = new Date();
-        const dateStr = now.getDate().toString().padStart(2, '0') + 
-                        (now.getMonth() + 1).toString().padStart(2, '0') + 
-                        now.getFullYear().toString().substr(2,2);
-        const timeStr = now.getHours().toString().padStart(2, '0') + 
-                        now.getMinutes().toString().padStart(2, '0') + 
-                        now.getSeconds().toString().padStart(2, '0');
+        const dateStr = now.getDate().toString().padStart(2, '0') +
+            (now.getMonth() + 1).toString().padStart(2, '0') +
+            now.getFullYear().toString().substr(2, 2);
+        const timeStr = now.getHours().toString().padStart(2, '0') +
+            now.getMinutes().toString().padStart(2, '0') +
+            now.getSeconds().toString().padStart(2, '0');
         const fileName = dateStr + "_" + timeStr + ".png";
 
-     
         const link = document.createElement('a');
         link.download = fileName;
         link.href = canvas.toDataURL("image/png");
