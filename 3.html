@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YBBY</title>
+    <style>
+        body {
+            background-color: gray;
+            color: white;
+        }
+        canvas {
+            border: 1px solid white;
+            cursor: crosshair;
+            display: block;
+            margin: 20px auto;
+        }
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        #kittyMenu button {
+            margin-right: 5px;
+            width: 150px;
+            height: 50px;
+        }
+        #brushSize {
+            width: 80%;
+            height: 10px;
+            outline: none;
+            -webkit-appearance: none;
+            margin: 20px 0;
+        }
+        #brushSize::-webkit-slider-thumb {
+            width: 20px;
+            height: 20px;
+            background: teal;
+            cursor: pointer;
+            -webkit-appearance: none;
+            border-radius: 50%;
+        }
+        #brushSize::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: teal;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        #brushSize::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            animate: none;
+            background: #ccc;
+        }
+        #brushSize::-moz-range-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            background: #ccc;
+        }
+        #useCustomImage {
+            background: url('button.jpg') no-repeat center;
+            background-size: cover;
+            background-position: center;
+            border: none;
+            cursor: pointer;
+            width: 150px;
+            height: 50px;
+        }
+        #saveCanvas {
+            width: 150px;
+            height: 50px;
+            border: none;
+            cursor: pointer;
+        }
+        #kittyMenu button {
+            background-color: #444;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: background-color 0.3s ease;
+        }
+        #kittyMenu button:hover {
+            background-color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div id="kittyMenu">
+        <button onclick="selectKitty('kitty1.png')">Kitty 1</button>
+        <button onclick="selectKitty('kitty2.png')">Kitty 2</button>
+        <button onclick="selectKitty('kitty3.png')">Kitty 3</button>
+        <button onclick="selectKitty('kitty4.png')">Kitty 4</button>
+        <button onclick="selectKitty('kitty5.png')">Kitty 5</button>
+        <button onclick="selectKitty('kitty6.png')">Kitty 6</button>
+        <button onclick="selectKitty('kitty7.png')">Kitty 7</button>
+        <button onclick="selectKitty('kitty8.png')">Kitty 8</button>
+        <button onclick="selectKitty('kitty9.png')">Kitty 9</button>
+        <button onclick="selectKitty('kitty10.png')">Kitty 10</button>
+    </div>
+
+    <canvas id="canvas" width="1000" height="800"></canvas>
+
+    <div id="controls">
+        <div>
+            <input type="file" id="customImage" style="display:none">
+            <button id="useCustomImage"></button>
+        </div>
+        <div>
+            <label for="brushSize" style="color:Teal; font-size: larger;">Brush Size</label>
+            <input type="range" id="brushSize" min="1" max="100" value="10">
+        </div>
+        <div>
+            <input type="image" id="saveCanvas" src="save.jpg" alt="Save Drawing">
+        </div>
+    </div>
+
+    <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let scaleFactor = canvas.offsetWidth / canvas.width;
+    let selectedKitty = null;
+
+    function selectKitty(kittySrc) {
+        const kittyImage = new Image();
+        kittyImage.src = kittySrc;
+        kittyImage.onload = () => {
+            selectedKitty = kittyImage;
+        };
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseout', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchmove', draw);
+
+    function startDrawing(e) {
+        e.preventDefault();
+        isDrawing = true;
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+        ctx.beginPath();
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        let x = (e.clientX || e.touches[0].clientX) - canvas.getBoundingClientRect().left;
+        let y = (e.clientY || e.touches[0].clientY) - canvas.getBoundingClientRect().top;
+
+        if (selectedKitty) {
+            let kittyRatio = selectedKitty.width / selectedKitty.height;
+            let kittyHeight = canvas.height / 10;
+            let kittyWidth = kittyHeight * kittyRatio;
+            ctx.drawImage(selectedKitty, x - kittyWidth / 2, y - kittyHeight / 2, kittyWidth, kittyHeight);
+            isDrawing = false; // Stops drawing mode after stamping the kitty
+        } else {
+            ctx.lineCap = 'round';
+            ctx.lineWidth = document.getElementById('brushSize').value;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+    }
+
+    document.getElementById('brushSize').addEventListener('input', (event) => {
+        ctx.lineWidth = event.target.value;
+    });
+
+    document.getElementById('useCustomImage').addEventListener('click', () => {
+        document.getElementById('customImage').click();
+    });
+
+    document.getElementById('customImage').addEventListener('change', function(event) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                customPattern = ctx.createPattern(img, 'repeat');
+                ctx.fillStyle = customPattern;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    });
+
+    document.getElementById('saveCanvas').addEventListener('click', function() {
+        const dataURL = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'my-drawing.png';
+        link.href = dataURL;
+        link.click();
+    });
+
+    </script>
+</body>
+</html>
